@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TG Photo Metadata Bot</title>
+    <title>METADATA EXTRACTOR // DARKNET EDITION // CORE v3.1</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
     
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
-            --text-color: var(--tg-theme-text-color, #222222);
-            --hint-color: var(--tg-theme-hint-color, #999999);
-            --button-color: var(--tg-theme-button-color, #2481cc);
-            --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f4);
+            --bg-color: #050505; /* Почти черный для фона */
+            --text-color: #00ff00; /* Ярко-зеленый "матричный" текст */
+            --accent-color: #ff0000; /* Красный для предупреждений и акцентов */
+            --hint-color: #00cc00; /* Более тусклый зеленый для подсказок */
+            --border-color: #00ff00; /* Зеленые границы */
+            --secondary-bg: #101010; /* Чуть светлее черный для блоков */
+            --font-family: 'Courier New', Courier, monospace; /* Моноширинный шрифт */
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: var(--font-family);
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -26,20 +27,52 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7); /* Эффект свечения */
         }
 
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: rgba(0, 20, 0, 0.2); /* Едва заметный зеленый фон */
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header .version {
+            font-size: 12px;
+            color: var(--hint-color);
         }
 
         .upload-box {
-            border: 2px dashed var(--hint-color);
-            border-radius: 12px;
-            padding: 30px 10px;
+            border: 2px dashed var(--border-color);
+            border-radius: 0; /* Убираем скругления */
+            padding: 40px 10px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--secondary-bg);
+            display: block; /* Чтобы метка вела себя как блок */
+        }
+
+        .upload-box:hover {
+            background-color: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
         }
 
         input[type="file"] {
@@ -48,55 +81,89 @@
 
         .btn-upload {
             display: inline-block;
-            background-color: var(--button-color);
-            color: var(--button-text);
-            padding: 10px 20px;
-            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-color);
+            padding: 12px 24px;
+            border: 1px solid var(--border-color);
             text-decoration: none;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
         }
 
         #preview {
             width: 100%;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
             display: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            filter: grayscale(100%) brightness(80%) contrast(120%); /* Мрачный фильтр для фото */
         }
 
         .map-box {
-            background-color: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 10px;
+            background-color: rgba(255, 0, 0, 0.1); /* Красный фон для важных данных */
+            border: 1px solid var(--accent-color);
             padding: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: none;
-            color: #0d47a1;
+            color: var(--accent-color);
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+        }
+
+        .map-box strong {
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .map-link {
             display: block;
-            margin-top: 8px;
-            color: #ffffff;
-            background-color: #1a73e8;
+            margin-top: 10px;
+            color: var(--bg-color);
+            background-color: var(--accent-color);
             text-align: center;
-            padding: 8px;
-            border-radius: 5px;
+            padding: 10px;
             text-decoration: none;
             font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .map-link:hover {
+            background-color: transparent;
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        .data-container {
+            margin-top: 20px;
+        }
+
+        .data-container h3 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
+            margin-top: 10px;
         }
 
         th, td {
             text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid var(--secondary-bg);
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
             word-break: break-all;
         }
 
@@ -104,38 +171,66 @@
             color: var(--hint-color);
             text-transform: uppercase;
             font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        tr:hover {
+            background-color: rgba(0, 255, 0, 0.05);
         }
 
         .hidden { display: none; }
+
+        /* Эффект печатающегося текста для заголовка */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        .typing-effect {
+            overflow: hidden;
+            border-right: 2px solid var(--text-color);
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--text-color); }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Извлечение метаданных</h2>
+    <div class="header">
+        <h1 class="typing-effect">ЗАХВАТ МЕТАДАННЫХ</h1>
+        <div class="version"></div>
+    </div>
     
     <label for="file-input" class="upload-box" id="drop-area">
-        <p>Нажмите, чтобы выбрать оригинальное фото</p>
-        <span class="btn-upload">Выбрать файл</span>
+        <p>>>> ОЖИДАНИЕ ВХОДНОГО ФАЙЛА...</p>
+        <p style="font-size: 12px; color: var(--hint-color);"></p>
+        <span class="btn-upload">ВЫБРАТЬ ЦЕЛЬ</span>
         <input type="file" id="file-input" accept="image/*">
     </label>
 
-    <img id="preview" alt="Превью">
+    <img id="preview" alt="ОБРАЗ ЦЕЛИ">
 
     <div id="map-container" class="map-box">
-        <strong>📍 Место съемки найдено:</strong>
-        <div id="coords-text" style="margin-top: 5px; font-family: monospace;"></div>
-        <a id="google-maps" class="map-link" target="_blank">Открыть в Google Maps</a>
-        <a id="yandex-maps" class="map-link" target="_blank" style="background-color: #ffcc00; color: #000;">Открыть в Яндекс.Картах</a>
+        <strong>📍 ГЕОЛОКАЦИЯ ОБНАРУЖЕНА:</strong>
+        <div id="coords-text" style="margin-top: 8px; font-family: monospace; font-size: 1.2em;"></div>
+        <a id="google-maps" class="map-link" target="_blank">ПОКАЗАТЬ НА КАРТЕ</a>
+        <a id="yandex-maps" class="map-link" target="_blank" style="background-color: #ffcc00; color: #000;">ПОКАЗАТЬ НА КАРТЕ</a>
     </div>
 
-    <div id="data-container" class="hidden">
-        <h3>Все данные EXIF:</h3>
+    <div id="data-container" class="data-container hidden">
+        <h3>>>> РЕЗУЛЬТАТЫ СКАНИРОВАНИЯ EXIF:</h3>
         <table>
             <thead>
                 <tr>
-                    <th>Параметр</th>
-                    <th>Значение</th>
+                    <th>ПАРАМЕТР</th>
+                    <th>ЗНАЧЕНИЕ</th>
                 </tr>
             </thead>
             <tbody id="meta-table-body"></tbody>
@@ -170,47 +265,53 @@
         metaTable.innerHTML = '';
         mapContainer.style.display = 'none';
         dataContainer.classList.add('hidden');
-
-        // Показ превью
+        
+        // Показ превью с задержкой для эффекта "загрузки"
         const reader = new FileReader();
         reader.onload = (event) => {
             preview.src = event.target.result;
             preview.style.display = 'block';
         };
-        reader.readAsDataURL(file);
-
-        // Работа с EXIF
-        EXIF.getData(file, function() {
-            const allTags = EXIF.getAllTags(this);
+        
+        // Имитация процесса сканирования
+        tg.showScanQrPopup({text: "Идет глубокое сканирование файла..."});
+        setTimeout(() => {
+            tg.closeScanQrPopup();
+            reader.readAsDataURL(file);
             
-            if (Object.keys(allTags).length === 0) {
-                tg.showAlert("Метаданные не найдены. Возможно, Telegram или телефон удалил их при сохранении.");
-                return;
-            }
-
-            // Обработка GPS
-            const lat = toDecimal(allTags.GPSLatitude, allTags.GPSLatitudeRef);
-            const lon = toDecimal(allTags.GPSLongitude, allTags.GPSLongitudeRef);
-
-            if (lat && lon) {
-                mapContainer.style.display = 'block';
-                const latFixed = lat.toFixed(6);
-                const lonFixed = lon.toFixed(6);
-                coordsText.innerText = `${latFixed}, ${lonFixed}`;
-                document.getElementById('google-maps').href = `https://www.google.com/maps?q=${latFixed},${lonFixed}`;
-                document.getElementById('yandex-maps').href = `https://yandex.ru/maps/?text=${latFixed},${lonFixed}`;
-            }
-
-            // Заполнение таблицы данными
-            for (let tag in allTags) {
-                if (tag === 'thumbnail' || typeof allTags[tag] === 'object' && !Array.isArray(allTags[tag])) continue;
+            // Работа с EXIF после "сканирования"
+            EXIF.getData(file, function() {
+                const allTags = EXIF.getAllTags(this);
                 
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${tag}</td><td>${allTags[tag]}</td>`;
-                metaTable.appendChild(row);
-            }
-            dataContainer.classList.remove('hidden');
-        });
+                if (Object.keys(allTags).length === 0) {
+                    tg.showAlert(">>> ОШИБКА: Метаданные не найдены. Файл защищен или очищен.");
+                    return;
+                }
+
+                // Обработка GPS
+                const lat = toDecimal(allTags.GPSLatitude, allTags.GPSLatitudeRef);
+                const lon = toDecimal(allTags.GPSLongitude, allTags.GPSLongitudeRef);
+
+                if (lat && lon) {
+                    mapContainer.style.display = 'block';
+                    const latFixed = lat.toFixed(6);
+                    const lonFixed = lon.toFixed(6);
+                    coordsText.innerText = ``;
+                    document.getElementById('google-maps').href = `https://www.google.com/maps?q=${latFixed},${lonFixed}`;
+                    document.getElementById('yandex-maps').href = `https://yandex.ru/maps/?text=${latFixed},${lonFixed}`;
+                }
+
+                // Заполнение таблицы данными
+                for (let tag in allTags) {
+                    if (tag === 'thumbnail' || typeof allTags[tag] === 'object' && !Array.isArray(allTags[tag])) continue;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${tag.toUpperCase()}</td><td>${allTags[tag]}</td>`;
+                    metaTable.appendChild(row);
+                }
+                dataContainer.classList.remove('hidden');
+            });
+        }, 1500); // Задержка 1.5 секунды
     });
 </script>
 
